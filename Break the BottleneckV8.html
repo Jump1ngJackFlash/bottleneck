@@ -740,9 +740,15 @@
       }
 
       // Strong process + high close but calls not scaling with inbound => qualified demand (fit/intent)
-      // Guard: if calls are VERY low (0–2) with HIGH inbound, this is conversion/qualification failure (handled above), not volume.
-      if (processStrong && closeHigh && inboundCount >= 50 && !callsHighTier && !veryLowCalls) {
+      // ONLY when calls exist at a reasonable floor (6+). Otherwise this is still conversion friction.
+      if (processStrong && closeHigh && inboundCount >= 50 && callsHighTier === false && !veryLowCalls && ctx.calls7 !== "3-5") {
         scores.VOL += 4;
+      }
+
+      // NEW: High inbound (50+) with elite mechanics but LOW calls (3–5) = Conversion / Qualification failure
+      if (inboundCount >= 50 && (ctx.calls7 === "3-5") && processStrong) {
+        scores.CON += 6;
+        scores.VOL = Math.min(scores.VOL, 2);
       }
 
       const sorted = sortScores(scores);
@@ -885,3 +891,4 @@
   </script>
 </body>
 </html>
+
