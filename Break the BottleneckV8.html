@@ -702,13 +702,36 @@
       if (sym.everything) scores.CON += 1;
       if (sym.overwhelmed) scores.DEL += 1;
       if (sym.harder) scores.STR += 1;
+      const veryLowInbound = ctx.leads7 === "0-5";
+      const lowInbound = ctx.leads7 === "0-5" || ctx.leads7 === "6-20";
+      const veryLowCalls = ctx.calls7 === "0-2";
 
       // Guardrails
-      // If response mechanics are broken, do not label it as pure volume.
-      if (speedFail || ctx.followup === "low") scores.VOL = Math.min(scores.VOL, 2);
+      // If inbound is very low, you don't have enough at-bats to diagnose conversion reliably.
+      if (veryLowInbound) {
+        scores.VOL += 8;
+        scores.CON = Math.min(scores.CON, 2);
+      }
+
+      // If inbound is low AND calls are very low, it's still a qualified-demand problem (not conversion).
+      // NOTE: this rule should NOT apply when inbound is very high (50+).
+      if (lowInbound && veryLowCalls) {
+        scores.VOL += 6;
+        scores.CON = Math.min(scores.CON, 2);
+      }
+
+      // NEW: If inbound is HIGH (50+) with elite mechanics but calls are very low, this is a CONVERSION / QUALIFICATION failure, not volume.
+      // This must stay true even after later scoring rules.
+      if (inboundCount >= 50 && veryLowCalls && processStrong) {
+        scores.CON += 8;
+        scores.VOL = Math.min(scores.VOL, 2);
+      }
+      // If response mechanics are broken, do not label it as pure volume ONLY when inbound is not the limiting factor.
+      if ((speedFail || ctx.followup === "low") && !lowInbound) scores.VOL = Math.min(scores.VOL, 2);
 
       // If derived qualified demand is already large, raw volume isn't the issue.
       if (realDemand >= 40) scores.VOL = Math.min(scores.VOL, 2);
+
 
       // High inbound but poor fit/intent becomes VOL (quality volume), not CON.
       if (inboundCount >= 50 && (ctx.fitPct === "low" || ctx.leadQuality === "low")) {
@@ -717,14 +740,21 @@
       }
 
       // Strong process + high close but calls not scaling with inbound => qualified demand (fit/intent)
-      if (processStrong && closeHigh && inboundCount >= 50 && !callsHighTier) {
+      // Guard: if calls are VERY low (0–2) with HIGH inbound, this is conversion/qualification failure (handled above), not volume.
+      if (processStrong && closeHigh && inboundCount >= 50 && !callsHighTier && !veryLowCalls) {
         scores.VOL += 4;
       }
 
       const sorted = sortScores(scores);
       let primaryKey = sorted[0] ? sorted[0][0] : "CON";
-      const secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["VOL"])[0];
+      let secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["VOL"])[0];
 
+      // Hard override: with low inbound + very low calls, default to Qualified Demand unless delivery is clearly saturated.
+      // BUT if inbound is high (50+) with elite mechanics, allow Conversion to surface.
+      if ((lowInbound && veryLowCalls) && primaryKey === "CON" && ctx.capacity !== "high") {
+        primaryKey = "VOL";
+        secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["CON"])[0];
+      }
       let conf = confidenceFromGap((sorted[0] ? sorted[0][1] : 0) - (sorted[1] ? sorted[1][1] : 0));
       conf = capConfidenceBySample(conf, ctx.calls7);
 
