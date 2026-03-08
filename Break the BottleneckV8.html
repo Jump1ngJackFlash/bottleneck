@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Constraint Fixer | BuilderOS</title>
+  <title>Founder Bottleneck Diagnostic</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,14 +11,12 @@
 
   <style>
     :root {
-      /* Builder palette */
-      --builder-blue: #264653;    /* Deep Builder Blue */
-      --builder-green: #3CAEA3;   /* Growth Green */
-      --builder-orange: #F77F00;  /* Bright Momentum Orange */
-      --builder-grey: #6B6E70;    /* Steel Grey */
-      --builder-base: #FAF9F6;    /* Off-White */
+      --builder-blue: #264653;
+      --builder-green: #3CAEA3;
+      --builder-orange: #F77F00;
+      --builder-grey: #6B6E70;
+      --builder-base: #FAF9F6;
 
-      /* UI tokens */
       --surface: rgba(0, 0, 0, 0.18);
       --border: rgba(107, 110, 112, 0.55);
       --muted: rgba(250, 249, 246, 0.72);
@@ -59,7 +57,6 @@
       background-position: right 1rem center;
       background-repeat: no-repeat;
       background-size: 1.5em 1.5em;
-
       background-color: var(--surface);
       color: var(--builder-base);
       border: 1px solid var(--border);
@@ -71,7 +68,6 @@
       box-shadow: 0 0 0 3px rgba(247,127,0,0.18);
     }
 
-    /* Best-effort for option colors (browser-dependent) */
     select option {
       background-color: var(--builder-blue);
       color: var(--builder-base);
@@ -100,58 +96,86 @@
 <body class="p-6 md:p-12">
   <div class="max-w-2xl mx-auto">
     <header class="mb-12 text-center">
-      <h1 class="text-3xl font-black tracking-widest text-[var(--builder-base)] mb-2 uppercase italic">
-        Builder<span class="text-[var(--accent)] not-italic">OS</span>
+      <h1 class="text-3xl md:text-4xl font-black text-[var(--builder-base)] mb-3">
+        Founder <span class="text-[var(--accent)]">Bottleneck</span> Diagnostic
       </h1>
-      <p class="text-xs tracking-wider uppercase text-[var(--muted)]">Diagnostic mode · Identify the real bottleneck</p>
+      <p class="text-sm md:text-base text-[var(--builder-base)] font-semibold">
+        Find the 1 bottleneck slowing your growth in under 60 seconds
+      </p>
+      <p class="mt-2 text-xs tracking-wide uppercase text-[var(--muted)]">
+        Answer a few quick questions to see whether the real constraint is demand, conversion, delivery, or founder dependency
+      </p>
     </header>
 
     <div id="runtime-error" class="hidden mb-6 p-4 rounded-lg border border-[var(--danger)] bg-[var(--danger-bg)] text-red-200 text-sm"></div>
 
-    <!-- STEP 1 -->
-    <section id="step-1" class="space-y-6">
+    <section id="intro" class="space-y-6">
+      <div class="p-8 card glow border-[var(--accent)]/40 text-center">
+        <p class="text-xs tracking-widest uppercase text-[var(--accent)] font-bold mb-3">
+          Quick Diagnostic
+        </p>
+
+        <h2 class="text-2xl md:text-3xl font-black text-[var(--builder-base)] mb-3">
+          Founder Bottleneck Diagnostic
+        </h2>
+
+        <p class="text-sm md:text-base text-[var(--builder-base)] font-semibold mb-4">
+          Find the 1 bottleneck slowing your growth in under 60 seconds
+        </p>
+
+        <p class="text-sm text-[var(--muted)] leading-relaxed max-w-xl mx-auto">
+          This is a quick diagnostic, not a full audit. It gives you a directional read on the most likely bottleneck based on your inputs.
+          For a more accurate diagnosis, the next step is a deeper Math &amp; Margin Audit covering pricing, margins, acquisition efficiency, and founder dependency.
+        </p>
+
+        <button id="btn-intro" type="button" class="mt-8 w-full md:w-auto px-8 py-4 btn glow">
+          Start Diagnostic
+        </button>
+      </div>
+    </section>
+
+    <section id="step-1" class="space-y-6 hidden">
       <div class="space-y-2">
-        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">What’s the bottleneck right now?</h2>
-        <p class="text-sm text-[var(--muted)]">Pick the top 1–2 symptoms. More than that = noise.</p>
+        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">Where is growth breaking first?</h2>
+        <p class="text-sm text-[var(--muted)]">Pick the top 1–2 symptoms. More than that creates noise.</p>
         <p id="selection-error" class="text-sm text-red-300 hidden italic">Select 1 or 2 symptoms to continue.</p>
         <p id="selection-max" class="text-sm text-yellow-200 hidden italic">You can only pick 2. Uncheck one to choose another.</p>
       </div>
 
       <div class="grid grid-cols-1 gap-3">
         <input type="checkbox" id="sym-leads" class="symptom hidden">
-        <label for="sym-leads" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We need more leads</label>
+        <label for="sym-leads" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We need more qualified leads</label>
 
         <input type="checkbox" id="sym-everything" class="symptom hidden">
-        <label for="sym-everything" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We’ve tried everything</label>
+        <label for="sym-everything" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We’ve tried multiple fixes and growth is still stuck</label>
 
         <input type="checkbox" id="sym-overwhelmed" class="symptom hidden">
-        <label for="sym-overwhelmed" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Team is overwhelmed</label>
+        <label for="sym-overwhelmed" class="block p-4 card cursor-pointer hover:border-slate-500 transition">The team is overloaded</label>
 
         <input type="checkbox" id="sym-harder" class="symptom hidden">
-        <label for="sym-harder" class="block p-4 card cursor-pointer hover:border-slate-500 transition">I’m working harder than ever</label>
+        <label for="sym-harder" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Growth still depends too much on me</label>
 
         <input type="checkbox" id="sym-flat" class="symptom hidden">
-        <label for="sym-flat" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Sales are flat</label>
+        <label for="sym-flat" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Revenue has stalled</label>
       </div>
 
-      <button id="btn-step1" type="button" class="w-full py-4 btn glow">Next: Diagnostic Questions →</button>
+      <button id="btn-step1" type="button" class="w-full py-4 btn glow">Continue to Constraint Analysis →</button>
     </section>
 
-    <!-- STEP 2 -->
     <section id="step-2" class="space-y-6 hidden">
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">Diagnostic Questions</h2>
+        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">Constraint Analysis</h2>
         <button id="btn-back-step2" type="button" class="text-xs text-[var(--muted)] hover:text-[var(--builder-base)] transition underline">← Back</button>
       </div>
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Monthly Revenue</label>
+          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Annual Revenue</label>
           <select id="rev" class="w-full p-4 card">
-            <option value="low">&lt; $10k</option>
-            <option value="mid" selected>$10k – $30k</option>
-            <option value="high">$30k – $100k</option>
-            <option value="scale">$100k+</option>
+            <option value="low">Under $1M</option>
+            <option value="mid" selected>$1M – $3M</option>
+            <option value="high">$3M – $10M</option>
+            <option value="scale">$10M+</option>
           </select>
         </div>
 
@@ -249,24 +273,23 @@
         </div>
       </div>
 
-      <button id="btn-step2" type="button" class="w-full py-4 btn glow">Run Diagnostic</button>
+      <button id="btn-step2" type="button" class="w-full py-4 btn glow">See My Bottleneck</button>
     </section>
 
-    <!-- RESULT -->
     <section id="result" class="hidden space-y-6">
       <div class="p-8 card glow border-[var(--accent)]/50">
         <button id="btn-back-result" type="button" class="mb-4 text-xs text-[var(--muted)] hover:text-[var(--builder-base)] transition underline">← Back to answers</button>
 
         <div class="flex justify-between mb-4">
-          <span class="text-[var(--accent)] text-xs font-bold tracking-widest uppercase">Result</span>
+          <span class="text-[var(--accent)] text-xs font-bold tracking-widest uppercase">Primary Bottleneck</span>
           <span id="confidence-badge" class="text-xs font-bold px-2 py-1 rounded uppercase italic"></span>
         </div>
 
         <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
-            <p class="text-xs text-[var(--muted)] font-bold uppercase">Estimated Monthly Revenue Leak</p>
+            <p class="text-xs text-[var(--muted)] font-bold uppercase">Estimated Revenue at Risk</p>
             <p class="text-5xl font-black text-[var(--builder-base)]">$<span id="revenue-leak">0</span> <span class="text-sm text-[var(--muted)] font-medium">/ month</span></p>
-            <p class="text-xs text-[var(--muted)] mt-2">Cost of inaction based on revenue tier and constraint pattern.</p>
+            <p class="text-xs text-[var(--muted)] mt-2">Directional estimate based on revenue tier and the current constraint pattern.</p>
           </div>
           <div class="h-32">
             <canvas id="leakChart"></canvas>
@@ -277,39 +300,67 @@
         <p id="constraint-desc" class="text-slate-200 leading-relaxed"></p>
 
         <div class="mt-4 p-4 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)]">
-          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Why this is the constraint</p>
+          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Why this is happening</p>
           <ul id="constraint-why" class="text-sm text-slate-200 list-disc ml-5 space-y-1"></ul>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)]">
+          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Likely Economic Constraint</p>
+          <p id="economic-constraint-title" class="text-base font-bold text-[var(--builder-base)] mb-1"></p>
+          <p id="economic-constraint-desc" class="text-sm text-slate-200"></p>
         </div>
 
         <div id="constraint-not" class="mt-3 text-xs text-[var(--muted)] italic"></div>
 
-        <p class="mt-3 text-xs text-[var(--muted)] italic">This diagnosis is based on where qualified demand is breaking down, not raw traffic volume.</p>
+        <p class="mt-3 text-xs text-[var(--muted)] italic">This result is based on where qualified demand, conversion, delivery, or founder dependency is breaking down first.</p>
 
         <p id="secondary-constraint" class="text-sm text-[var(--muted)] mt-4"></p>
 
         <div id="constraint-drivers" class="mt-3 text-xs text-[var(--muted)]"></div>
 
         <div id="why-not-volume" class="mt-4 hidden p-4 rounded-lg border border-[var(--accent)]/30 bg-[rgba(247,127,0,0.10)] text-sm text-slate-100">
-          <p class="font-bold text-[var(--accent)] mb-1">Why this isn’t a pure volume problem</p>
+          <p class="font-bold text-[var(--accent)] mb-1">Why more leads will not fix this first</p>
           <p id="why-not-volume-text"></p>
         </div>
 
         <div class="mt-4">
-          <button id="toggle-sim" type="button" class="text-xs link">Simulate: What if you doubled traffic?</button>
+          <button id="toggle-sim" type="button" class="text-xs link">What happens if you double traffic right now?</button>
           <p id="sim-result" class="mt-2 text-xs text-[var(--muted)] hidden"></p>
         </div>
 
         <details class="mt-6 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)] p-4">
-          <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Review answers</summary>
+          <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Review diagnosis inputs</summary>
           <pre id="input-summary" class="mt-3 text-xs text-slate-200 whitespace-pre-wrap"></pre>
         </details>
 
         <div class="mt-8 pt-6 border-t border-[var(--border)]">
-          <h3 class="font-bold text-[var(--accent)] mb-3 uppercase tracking-tighter">14-Day Rapid Fix</h3>
+          <h3 class="font-bold text-[var(--accent)] mb-3 uppercase tracking-tighter">14-Day Fix Plan</h3>
           <p id="fix-plan" class="text-slate-100 bg-[rgba(0,0,0,0.18)] p-4 rounded-lg border-l-2 border-[var(--accent)] italic whitespace-pre-line"></p>
         </div>
 
-        <button id="btn-reset" type="button" class="mt-8 w-full py-3 text-[var(--muted)] text-sm hover:text-[var(--builder-base)] transition">↺ Reset</button>
+        <div class="mt-6 p-5 rounded-lg border border-[var(--accent)]/30 bg-[rgba(247,127,0,0.10)]">
+          <p class="text-sm text-slate-100">
+            This is a quick diagnostic, not a full audit. It identifies the most likely bottleneck based on your inputs.
+            For a more authoritative diagnosis, the next step is a deeper Math &amp; Margin Audit to review pricing, margins, acquisition efficiency, and founder dependency.
+          </p>
+        </div>
+
+        <div class="mt-4 p-5 rounded-lg border border-[var(--accent)] bg-[rgba(247,127,0,0.12)]">
+          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Next Step</p>
+          <h3 class="text-xl font-black text-[var(--builder-base)] mb-2">Book a Free 30-Minute Math &amp; Margin Audit</h3>
+          <p id="cta-copy" class="text-sm text-slate-100 mb-4"></p>
+          <a
+            id="cta-link"
+            href="https://tidycal.com/jerryjobrien/30-minute-meeting"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-block px-5 py-3 btn glow text-[var(--builder-base)]"
+          >
+            Book My Math &amp; Margin Audit
+          </a>
+        </div>
+
+        <button id="btn-reset" type="button" class="mt-8 w-full py-3 text-[var(--muted)] text-sm hover:text-[var(--builder-base)] transition">↺ Start Over</button>
       </div>
     </section>
   </div>
@@ -361,7 +412,8 @@
     }
 
     function goToStep(stepId) {
-      const s1 = $("step-1"), s2 = $("step-2"), res = $("result");
+      const intro = $("intro"), s1 = $("step-1"), s2 = $("step-2"), res = $("result");
+      if (intro) intro.classList.add("hidden");
       if (s1) s1.classList.add("hidden");
       if (s2) s2.classList.add("hidden");
       if (res) res.classList.add("hidden");
@@ -393,20 +445,40 @@
       sim.classList.remove("hidden");
     }
 
-    // ===============================
-    // Model
-    // ===============================
-
-    const REV_MIDPOINT = { low: 8000, mid: 20000, high: 65000, scale: 150000 };
-
-    const LEAK_MULT = {
-      VOL: 0.18, // qualified demand missing
-      CON: 0.12, // conversion friction
-      DEL: 0.15, // capacity / rework
-      STR: 0.10, // decision throughput
+    const REV_MIDPOINT = {
+      low: 75000,
+      mid: 167000,
+      high: 542000,
+      scale: 1000000
     };
 
-    const TIE_PRIORITY = ["DEL", "CON", "VOL", "STR"]; // default tie-break
+    const LEAK_MULT = {
+      VOL: 0.18,
+      CON: 0.12,
+      DEL: 0.15,
+      STR: 0.10,
+    };
+
+    const TIE_PRIORITY = ["DEL", "CON", "VOL", "STR"];
+
+    const ECONOMIC_DATA = {
+      VOL: {
+        title: "Weak acquisition efficiency",
+        desc: "This usually points to a deeper economics issue around some mix of CAC, pricing, close rate, and LTV. The problem may look like volume, but the real constraint is often that growth is not economically efficient enough yet."
+      },
+      CON: {
+        title: "Value-to-acquisition mismatch",
+        desc: "This often means the business is generating attention, but the offer economics are not strong enough to convert demand efficiently. Pricing, proof, offer structure, and payback speed are usually the next numbers to pressure-test."
+      },
+      DEL: {
+        title: "Margin compression",
+        desc: "This usually points to thin margins, inconsistent fulfillment costs, underpricing, or churn pressure. Delivery stress is often a sign that the model cannot support scale cleanly at the current economics."
+      },
+      STR: {
+        title: "Insufficient margin to replace founder involvement profitably",
+        desc: "The founder dependency you are seeing is usually a surface-level operating symptom of a deeper economics issue. The business often does not yet have the margin structure, pricing power, or management design needed to replace founder involvement profitably."
+      }
+    };
 
     function sortScores(scores) {
       const pri = (k) => TIE_PRIORITY.indexOf(k);
@@ -435,7 +507,7 @@
     }
 
     function calcLeak(rev, key, conf) {
-      const base = REV_MIDPOINT[rev] || 20000;
+      const base = REV_MIDPOINT[rev] || 167000;
       const mult = LEAK_MULT[key] || 0.10;
       return Math.round(base * mult * confMod(conf));
     }
@@ -444,13 +516,13 @@
       const b = $("confidence-badge");
       if (!b) return;
       if (conf === "High") {
-        b.textContent = "High Confidence";
+        b.textContent = "Signal Strength: High";
         b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-high";
       } else if (conf === "Medium") {
-        b.textContent = "Medium Confidence";
+        b.textContent = "Signal Strength: Medium";
         b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-med";
       } else {
-        b.textContent = "Low Confidence";
+        b.textContent = "Signal Strength: Low";
         b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-low";
       }
     }
@@ -517,42 +589,31 @@
       return "10+";
     }
 
-    // ===============================
-    // Fix library (revenue-aware)
-    // ===============================
-
     const FIX_DATA = {
       VOL: {
-        title: "Volume of Qualified Demand Constraint",
+        title: "Qualified Demand Constraint",
         desc: "You are generating leads, but too few qualified conversations are forming. Demand exists, but fit, intent, speed, or follow-up is reducing effective volume.",
         why: [
           "Qualified conversations are too few relative to your delivery capacity",
-          "Fit/intent is suppressing real demand",
-          "Adding traffic now would amplify noise before revenue",
+          "Fit and intent are suppressing real demand",
+          "Adding traffic now would amplify noise before outcomes improve",
         ],
-        not: "Delivery is not saturated and owner absence does not materially stall outcomes.",
+        not: "Delivery is not saturated and founder absence does not materially stall outcomes.",
         fix: (ctx) => {
           const reps = ({ low: 25, mid: 35, high: 50, scale: 60 })[ctx.rev] || 35;
           const calls = ({ low: 6, mid: 10, high: 14, scale: 18 })[ctx.rev] || 10;
 
           const lines = [];
-          lines.push("Focus on quality-first acquisition and qualification.");
+          lines.push("Days 1-7: tighten qualification, response speed, and follow-up discipline to stop leaking demand you already created.");
+          lines.push("Days 8-14: pressure-test CAC, close rate, pricing, and LTV to see whether the economics support scaling demand cleanly.");
           lines.push("Daily reps: " + reps + " targeted touches to ICP-matched prospects.");
-
-          if (ctx.speed === "elite") lines.push("Speed: keep under 1 minute (already elite).");
-          else if (ctx.speed === "fast") lines.push("Speed: keep under 5 minutes. Push toward under 1 minute.");
-          else lines.push("Speed: move to under 5 minutes, then under 1 minute.");
-
-          if (ctx.followup === "high" || ctx.followup === "elite") lines.push("Follow-up: maintain " + followupLabel(ctx.followup) + " attempts.");
-          else lines.push("Follow-up: increase to 6–9 attempts minimum (10+ in competitive markets).");
-
           lines.push("Win by Day 14: " + calls + " qualified booked calls.");
           return lines.join("\n");
         },
       },
 
       CON: {
-        title: "Offer / Conversion Constraint",
+        title: "Conversion Constraint",
         desc: "You have demand signals, but conversion is weak. The offer, positioning, or sales path is adding friction.",
         why: [
           "Leads are responding but not progressing",
@@ -563,9 +624,9 @@
         fix: (ctx) => {
           const variants = ({ low: 2, mid: 3, high: 4, scale: 5 })[ctx.rev] || 3;
           return [
+            "Days 1-7: identify the biggest conversion friction in your offer, proof, positioning, or next-step process.",
+            "Days 8-14: pressure-test the economics behind conversion, including pricing strength, CAC efficiency, close rate, and payback speed.",
             "Build " + variants + " offer variants (headline + promise + guarantee).",
-            "Reduce friction: simplify the next step and sharpen outcomes.",
-            "Win by Day 14: higher booked-call rate or higher close rate.",
           ].join("\n");
         },
       },
@@ -580,37 +641,31 @@
         ],
         not: "Demand exists, but delivery cannot keep up.",
         fix: () => [
+          "Days 1-7: stabilize delivery by reducing custom work, tightening scope, and standardizing the main fulfillment path.",
+          "Days 8-14: review the economics underneath delivery stress, especially margins, fulfillment cost consistency, pricing, and churn pressure.",
           "Productize the #1 service clients buy.",
-          "Create SOPs for intake, fulfillment, and QA.",
-          "Refuse custom add-ons for 14 days unless productized.",
-          "Win by Day 14: faster cycle time or fewer delivery fires.",
         ].join("\n"),
       },
 
       STR: {
-        title: "Owner Throughput Constraint",
-        desc: "Decisions route through you. Throughput slows and the business becomes fragile.",
+        title: "Founder Dependency Constraint",
+        desc: "Growth is still too dependent on founder involvement. Decisions, escalations, or conversion still route through you, which slows throughput and makes scale fragile.",
         why: [
-          "Decisions stall without the owner",
-          "Execution pauses when you step away",
-          "Team lacks decision rights",
+          "Decisions stall without the founder",
+          "Execution slows down when you step away",
+          "The team lacks enough authority, structure, or margin-supported support around them",
         ],
-        not: "Demand and delivery exist but are gated by decision flow.",
+        not: "This is not mainly a leads problem or a pure delivery problem. The business is still relying too heavily on founder involvement to keep moving.",
         fix: (ctx) => {
           const looms = ({ low: 6, mid: 10, high: 14, scale: 18 })[ctx.rev] || 10;
-          const rights = ({ low: 250, mid: 500, high: 750, scale: 1000 })[ctx.rev] || 500;
           return [
+            "Days 1-7: map where the founder is still acting as closer, decision desk, or escalation layer.",
+            "Days 8-14: review whether pricing, margins, role design, and management structure are strong enough to replace founder involvement profitably.",
             "Record " + looms + " Looms replacing repeat explanations.",
-            "Grant decision rights up to $" + rights + ".",
-            "Win by Day 14: fewer interruptions with momentum maintained.",
           ].join("\n");
         },
       },
     };
-
-    // ===============================
-    // Scoring logic
-    // ===============================
 
     function mechanicsFirstBlock(ctx) {
       const speedElite = (ctx.speed === "elite");
@@ -654,11 +709,11 @@
         flat: $("sym-flat") && $("sym-flat").checked,
       };
 
-      if (sym.leads) ctx.symptoms.push("Need more leads");
-      if (sym.everything) ctx.symptoms.push("Tried everything");
-      if (sym.overwhelmed) ctx.symptoms.push("Team overwhelmed");
-      if (sym.harder) ctx.symptoms.push("Working harder than ever");
-      if (sym.flat) ctx.symptoms.push("Sales are flat");
+      if (sym.leads) ctx.symptoms.push("Need more qualified leads");
+      if (sym.everything) ctx.symptoms.push("Tried multiple fixes and growth is still stuck");
+      if (sym.overwhelmed) ctx.symptoms.push("The team is overloaded");
+      if (sym.harder) ctx.symptoms.push("Growth still depends too much on me");
+      if (sym.flat) ctx.symptoms.push("Revenue has stalled");
 
       const inboundCount = inboundToCount(ctx.leads7);
       const realDemand = inboundCount * fitToMult(ctx.fitPct) * intentAdj(ctx.leadQuality);
@@ -672,101 +727,77 @@
 
       const scores = { VOL: 0, CON: 0, DEL: 0, STR: 0 };
 
-      // Delivery evidence
       if (ctx.capacity === "high") scores.DEL += 8;
       if (ctx.capacity === "mid") scores.DEL += 3;
       if (ctx.stall === "delivery") scores.DEL += 4;
-      if (ctx.capacity === "low") scores.DEL -= 6; // don't call delivery the bottleneck when underutilized
+      if (ctx.capacity === "low") scores.DEL -= 6;
 
-      // Offer / conversion friction
       if (ctx.closeRate === "low" && callsNotZero) scores.CON += 6;
       if (ctx.speed === "broken") scores.CON += 6;
       if (ctx.speed === "leak") scores.CON += 4;
       if (ctx.followup === "low") scores.CON += 5;
       if (ctx.followup === "mid") scores.CON += 2;
 
-      // Qualified demand volume (quality volume)
       if (ctx.leads7 === "0-5") scores.VOL += 6;
       if (ctx.fitPct === "low") scores.VOL += 7;
       if (ctx.fitPct === "mid") scores.VOL += 3;
       if (ctx.leadQuality === "low") scores.VOL += 4;
 
-      // Owner
       if (ctx.stall === "nothing") scores.STR -= 8;
       if (ctx.stall === "decisions") scores.STR += 6;
       if (ctx.stall === "sales") scores.STR += 3;
 
-      // Step 1 symptoms (low weight)
       if (sym.leads) scores.VOL += 1;
       if (sym.flat) { scores.VOL += 1; scores.CON += 1; }
       if (sym.everything) scores.CON += 1;
       if (sym.overwhelmed) scores.DEL += 1;
       if (sym.harder) scores.STR += 1;
+
       const veryLowInbound = ctx.leads7 === "0-5";
       const lowInbound = ctx.leads7 === "0-5" || ctx.leads7 === "6-20";
       const veryLowCalls = ctx.calls7 === "0-2";
 
-      // Guardrails
-      // If inbound is very low, you don't have enough at-bats to diagnose conversion reliably.
       if (veryLowInbound) {
         scores.VOL += 8;
         scores.CON = Math.min(scores.CON, 2);
       }
 
-      // If inbound is low AND calls are very low, it's still a qualified-demand problem (not conversion).
-      // NOTE: this rule should NOT apply when inbound is very high (50+).
       if (lowInbound && veryLowCalls) {
         scores.VOL += 6;
         scores.CON = Math.min(scores.CON, 2);
       }
 
-      // NEW: If inbound is HIGH (50+) with elite mechanics but calls are very low, this is a CONVERSION / QUALIFICATION failure, not volume.
-      // This must stay true even after later scoring rules.
       if (inboundCount >= 50 && veryLowCalls && processStrong) {
         scores.CON += 8;
         scores.VOL = Math.min(scores.VOL, 2);
       }
-      // If response mechanics are broken, do not label it as pure volume ONLY when inbound is not the limiting factor.
-      if ((speedFail || ctx.followup === "low") && !lowInbound) scores.VOL = Math.min(scores.VOL, 2);
 
-      // If derived qualified demand is already large, raw volume isn't the issue.
+      if ((speedFail || ctx.followup === "low") && !lowInbound) scores.VOL = Math.min(scores.VOL, 2);
       if (realDemand >= 40) scores.VOL = Math.min(scores.VOL, 2);
 
-
-      // High inbound but poor fit/intent becomes VOL (quality volume), not CON.
       if (inboundCount >= 50 && (ctx.fitPct === "low" || ctx.leadQuality === "low")) {
         scores.VOL += 4;
         scores.CON += 1;
       }
 
-      // Strong process + high close but calls not scaling with inbound => qualified demand (fit/intent)
-      // ONLY when calls exist at a reasonable floor (6+). Otherwise this is still conversion friction.
-      if (processStrong && closeHigh && inboundCount >= 50 && callsHighTier === false && !veryLowCalls && ctx.calls7 !== "3-5") {
+      if (processStrong && closeHigh && inboundCount >= 50 && !callsHighTier && !veryLowCalls) {
         scores.VOL += 4;
-      }
-
-      // NEW: High inbound (50+) with elite mechanics but LOW calls (3–5) = Conversion / Qualification failure
-      if (inboundCount >= 50 && (ctx.calls7 === "3-5") && processStrong) {
-        scores.CON += 6;
-        scores.VOL = Math.min(scores.VOL, 2);
       }
 
       const sorted = sortScores(scores);
       let primaryKey = sorted[0] ? sorted[0][0] : "CON";
       let secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["VOL"])[0];
 
-      // Hard override: with low inbound + very low calls, default to Qualified Demand unless delivery is clearly saturated.
-      // BUT if inbound is high (50+) with elite mechanics, allow Conversion to surface.
       if ((lowInbound && veryLowCalls) && primaryKey === "CON" && ctx.capacity !== "high") {
         primaryKey = "VOL";
         secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["CON"])[0];
       }
+
       let conf = confidenceFromGap((sorted[0] ? sorted[0][1] : 0) - (sorted[1] ? sorted[1][1] : 0));
       conf = capConfidenceBySample(conf, ctx.calls7);
 
-      // Output
       const leak = calcLeak(ctx.rev, primaryKey, conf);
-      const base = REV_MIDPOINT[ctx.rev] || 20000;
+      const base = REV_MIDPOINT[ctx.rev] || 167000;
       const kept = Math.max(base - leak, 0);
 
       setBadge(conf);
@@ -774,13 +805,28 @@
       if (leakEl) leakEl.textContent = leak.toLocaleString();
 
       const primary = FIX_DATA[primaryKey] || FIX_DATA.CON;
+      const economic = ECONOMIC_DATA[primaryKey] || ECONOMIC_DATA.CON;
+
       const titleEl = $("constraint-title"), descEl = $("constraint-desc"), fixEl = $("fix-plan");
+      const econTitleEl = $("economic-constraint-title"), econDescEl = $("economic-constraint-desc");
+      const ctaCopyEl = $("cta-copy");
+
       if (titleEl) titleEl.textContent = primary.title;
       if (descEl) descEl.textContent = primary.desc;
+      if (econTitleEl) econTitleEl.textContent = economic.title;
+      if (econDescEl) econDescEl.textContent = economic.desc;
+
       if (fixEl) {
         const gate = mechanicsFirstBlock(ctx);
         const primaryBlock = "Primary constraint actions (Days 4–14):" + NL + primary.fix(ctx);
         fixEl.textContent = (gate ? gate + NL + NL : "") + primaryBlock;
+      }
+
+      if (ctaCopyEl) {
+        ctaCopyEl.textContent =
+          "Your current bottleneck is likely costing you about $" +
+          leak.toLocaleString() +
+          " per month in missed capacity, weak conversion, or margin leakage. The next step is not just more marketing. It is pressure-testing the math underneath this bottleneck.";
       }
 
       const whyList = $("constraint-why");
@@ -794,11 +840,11 @@
       }
 
       const notEl = $("constraint-not");
-      if (notEl) notEl.textContent = "What is NOT breaking: " + (primary.not || "");
+      if (notEl) notEl.textContent = "What is not the main issue: " + (primary.not || "");
 
       const secEl = $("secondary-constraint");
       if (secEl && secondaryKey && secondaryKey !== primaryKey) {
-        secEl.textContent = "Next bottleneck (after fix): " + FIX_DATA[secondaryKey].title;
+        secEl.textContent = "What likely becomes the next bottleneck: " + FIX_DATA[secondaryKey].title;
       } else if (secEl) {
         secEl.textContent = "";
       }
@@ -812,7 +858,6 @@
         else driversEl.textContent = "";
       }
 
-      // Why-not-volume only when it’s actually true
       const whyBox = $("why-not-volume");
       const whyText = $("why-not-volume-text");
       if (whyBox && whyText) {
@@ -847,11 +892,8 @@
       goToStep("result");
     }
 
-    // ===============================
-    // Wiring
-    // ===============================
-
     function wireButtons() {
+      const introBtn = $("btn-intro");
       const s1 = $("btn-step1");
       const s2 = $("btn-step2");
       const b2 = $("btn-back-step2");
@@ -859,6 +901,7 @@
       const sim = $("toggle-sim");
       const reset = $("btn-reset");
 
+      if (introBtn) introBtn.addEventListener("click", () => goToStep("step-1"));
       if (s1) s1.addEventListener("click", validateStep1);
       if (b2) b2.addEventListener("click", () => goToStep("step-1"));
       if (s2) s2.addEventListener("click", calculateFix);
@@ -868,12 +911,14 @@
     }
 
     function runTests() {
-      // Basic wiring tests. If these fail, buttons will feel "dead".
+      if (!$("btn-intro")) throw new Error("Missing intro button");
       if (!$("btn-step1")) throw new Error("Missing Step 1 button");
       if (!$("btn-step2")) throw new Error("Missing Step 2 button");
       if (!$("btn-back-step2")) throw new Error("Missing Step 2 back button");
       if (!$("btn-back-result")) throw new Error("Missing result back button");
       if (!$("fitPct")) throw new Error("Missing fitPct question");
+      if (!$("economic-constraint-title")) throw new Error("Missing economic constraint title");
+      if (!$("cta-copy")) throw new Error("Missing CTA copy block");
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -891,4 +936,3 @@
   </script>
 </body>
 </html>
-
