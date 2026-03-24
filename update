@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Founder Bottleneck Diagnostic</title>
+
+  <meta name="description" content="Find the 1 bottleneck slowing your growth in under 60 seconds with our Founder Bottleneck Diagnostic." />
+  <meta property="og:title" content="Founder Bottleneck Diagnostic" />
+  <meta property="og:description" content="Find the 1 bottleneck slowing your growth in under 60 seconds with our Founder Bottleneck Diagnostic." />
+  <meta property="og:type" content="website" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Outfit', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            builder: {
+              bg: '#050505',
+              panel: '#0a0a0a',
+              text: '#ededed',
+              muted: '#888888',
+            },
+            accent: {
+              DEFAULT: '#ff5c00',
+              glow: 'rgba(255, 92, 0, 0.15)'
+            },
+            danger: '#ef4444'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #050505;
+      --panel: #0a0a0a;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #ff5c00;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: #ededed;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color-scheme: dark;
+    }
+
+    h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
+
+    /* The glowing orb that follows the active question */
+    .ambient-glow {
+      position: absolute;
+      width: 60vh;
+      height: 60vh;
+      background: radial-gradient(circle, rgba(255,92,0,0.08) 0%, rgba(0,0,0,0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+      transition: all 0.5s ease-out;
+    }
+
+    /* Layout Split */
+    .split-container {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Left Side: Active Question Area */
+    .q-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      z-index: 10;
+    }
+
+    /* Right Side: Live Diagnostic Console */
+    .console-area {
+      width: 400px;
+      background-color: var(--panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      z-index: 30;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Question Cards */
+    .question-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10%;
+      opacity: 0;
+      transform: translateX(40px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .question-slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    
+    .question-slide.done {
+      opacity: 0;
+      transform: translateX(-40px);
+      pointer-events: none;
+    }
+
+    /* Answer Choices (Keyboard Navigable) */
+    .choice-btn {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      padding: 1.25rem 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #ededed;
+      font-size: 1.125rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .choice-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .choice-btn:active, .choice-btn.selected {
+      background: rgba(255, 92, 0, 0.1);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .key-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: rgba(0,0,0,0.4);
+      font-family: monospace;
+    }
+
+    .choice-btn:hover .key-hint, .choice-btn.selected .key-hint {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Ticker styles */
+    .ticker-val {
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s;
+    }
+
+    .console-log {
+      max-height: 50%;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .log-line {
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: fadeIn 0.3s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* Fix responsive for mobile */
+    @media (max-width: 1024px) {
+      .split-container { flex-direction: column; }
+      .console-area { width: 100%; height: auto; border-left: none; border-top: 1px solid var(--border); flex: 0 0 auto; }
+      .q-area { padding: 2rem; }
+      .question-slide { padding: 5%; }
+    }
+  </style>
+</head>
+
+<body>
+  
+  <div class="progress-bar-container">
+    <div id="progress" class="progress-bar-fill"></div>
+  </div>
+
+  <div class="ambient-glow" id="glow"></div>
+
+  <main class="split-container">
+    
+    <!-- LEFT: Interactive Question Flow -->
+    <section class="q-area relative">
+      
+      <!-- Slide 0: Intro -->
+      <div class="question-slide active" id="slide-0">
+        <p class="text-accent text-sm font-bold tracking-widest uppercase mb-4">Founder Diagnostic</p>
+        <h1 class="text-6xl font-black font-display tracking-tight mb-6">Identify your growth bottleneck.</h1>
+        <p class="text-xl text-builder-muted mb-10 max-w-xl">This is a mechanical analysis. We will isolate whether your constraint is demand, conversion, delivery, or your own dependency.</p>
+        <button class="w-max choice-btn !bg-accent !text-white !border-accent hover:opacity-90 transition-opacity" onclick="nextSlide()">
+          Begin Analysis → <span class="key-hint !text-white !border-white/40 ml-4">Enter</span>
+        </button>
+      </div>
+
+      <!-- Slide 1: Symptoms -->
+      <div class="question-slide" id="slide-1">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">01 / 10 • Symptoms</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Where is growth breaking first?</h2>
+        <p class="text-sm text-builder-muted mb-8">Select the primary symptom you are feeling right now.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'leads')"><span class="key-hint">1</span> We need more qualified leads</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'everything')"><span class="key-hint">2</span> We’ve tried multiple fixes and growth is still stuck</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'overwhelmed')"><span class="key-hint">3</span> The team is overloaded</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'harder')"><span class="key-hint">4</span> Growth still depends too much on me</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'flat')"><span class="key-hint">5</span> Revenue has stalled entirely</button>
+        </div>
+      </div>
+
+      <!-- Slide 2: Revenue -->
+      <div class="question-slide" id="slide-2">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">02 / 10 • Scale</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">What is your annual revenue tier?</h2>
+        <p class="text-sm text-builder-muted mb-8">This determines capacity breakpoints and margin structure.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'low')"><span class="key-hint">1</span> Under $1M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'mid')"><span class="key-hint">2</span> $1M – $3M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'high')"><span class="key-hint">3</span> $3M – $10M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'scale')"><span class="key-hint">4</span> $10M+</button>
+        </div>
+      </div>
+
+      <!-- Slide 3: Inbound Volume -->
+      <div class="question-slide" id="slide-3">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">03 / 10 • Volume</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Inbound leads (Last 7 Days)</h2>
+        <p class="text-sm text-builder-muted mb-8">How many fresh conversations are hitting the pipeline?</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '0-5')"><span class="key-hint">1</span> 0–5</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '6-20')"><span class="key-hint">2</span> 6–20</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '21-50')"><span class="key-hint">3</span> 21–50</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '51-100')"><span class="key-hint">4</span> 51–100</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '100+')"><span class="key-hint">5</span> 100+</button>
+        </div>
+      </div>
+
+      <!-- Slide 4: Fit Rate -->
+      <div class="question-slide" id="slide-4">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">04 / 10 • Qualification</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Qualified-fit rate</h2>
+        <p class="text-sm text-builder-muted mb-8">Of the leads you get, how many are actually a fit for your offer (ICP)?</p>
+        
+        <div class="grid grid-cols-2 gap-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'low')"><span class="key-hint">1</span> Very few (&lt;20%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'mid')"><span class="key-hint">2</span> Some (20–40%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'high')"><span class="key-hint">3</span> Many (40–70%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'elite')"><span class="key-hint">4</span> Most (70%+)</button>
+        </div>
+      </div>
+
+      <!-- Slide 5: Speed -->
+      <div class="question-slide" id="slide-5">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">05 / 10 • Mechanics</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Speed to first response</h2>
+        <p class="text-sm text-builder-muted mb-8">Time elapsed between lead capture and first human/custom reply.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'elite')"><span class="key-hint">1</span> Under 1 minute</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'fast')"><span class="key-hint">2</span> 1–5 minutes</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'leak')"><span class="key-hint">3</span> 5–15 minutes</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'broken')"><span class="key-hint">4</span> 15+ minutes / same day</button>
+        </div>
+      </div>
+
+      <!-- Slide 6: Followup -->
+      <div class="question-slide" id="slide-6">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">06 / 10 • Mechanics</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Follow-up attempts per lead</h2>
+        
+        <div class="space-y-3 max-w-2xl mt-8">
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'low')"><span class="key-hint">1</span> 1–2 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'mid')"><span class="key-hint">2</span> 3–5 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'high')"><span class="key-hint">3</span> 6–9 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'elite')"><span class="key-hint">4</span> 10+ attempts</button>
+        </div>
+      </div>
+
+      <!-- Slide 7: Close Rate -->
+      <div class="question-slide" id="slide-7">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">07 / 10 • Conversion</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Win / Close Rate</h2>
+        <p class="text-sm text-builder-muted mb-8">Percentage of held sales calls that convert to closed-won revenue.</p>
+        
+        <div class="grid grid-cols-2 gap-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'low')"><span class="key-hint">1</span> &lt;15%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'mid')"><span class="key-hint">2</span> 15% – 30%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'high')"><span class="key-hint">3</span> 30% – 60%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'elite')"><span class="key-hint">4</span> 60%+</button>
+        </div>
+      </div>
+
+      <!-- Slide 8: Capacity -->
+      <div class="question-slide" id="slide-8">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">08 / 10 • Delivery</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Current Delivery Capacity</h2>
+        <p class="text-sm text-builder-muted mb-8">How heavily loaded is your fulfillment team?</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'low')"><span class="key-hint">1</span> &lt;50% (Room to scale)</button>
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'mid')"><span class="key-hint">2</span> 50–80% (Healthy load)</button>
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'high')"><span class="key-hint">3</span> 80%+ (Straining or breaking)</button>
+        </div>
+      </div>
+
+      <!-- Slide 9: Dependency -->
+      <div class="question-slide" id="slide-9">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">09 / 10 • Structure</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">If you stepped away for 7 days, what breaks?</h2>
+        
+        <div class="space-y-3 max-w-2xl mt-8">
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'sales')"><span class="key-hint">1</span> Sales pipeline stalls</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'delivery')"><span class="key-hint">2</span> Delivery errors spike</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'decisions')"><span class="key-hint">3</span> Decisions queue up on my desk</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'nothing')"><span class="key-hint">4</span> Nothing (Team operates without me)</button>
+        </div>
+      </div>
+
+      <!-- Slide 10: Email Gate -->
+      <div class="question-slide" id="slide-10">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">10 / 10 • Complete</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-4">Analysis Ready.</h2>
+        <p class="text-sm text-builder-muted mb-2">Enter your best email to instantly see your primary bottleneck and receive a full detailed diagnostic report in your inbox.</p>
+        <p class="text-sm text-accent font-bold mb-8">Scaling without fixing the underlying math will only accelerate the bleed.</p>
+        
+        <div class="max-w-xl">
+          <input type="email" id="user-email" placeholder="founder@company.com" class="w-full text-xl bg-transparent border-b-2 border-white/20 text-white placeholder-white/20 py-4 focus:outline-none focus:border-accent transition-colors mb-8" required>
+          <button class="w-full justify-center choice-btn !bg-accent !text-white !border-accent hover:opacity-90 transition-opacity" onclick="submitAnalysis()">
+            Reveal Result <span class="key-hint !text-white !border-white/40 ml-4">Enter</span>
+          </button>
+          <p id="email-err" class="text-danger text-sm mt-3 hidden">Please enter a valid email address to continue.</p>
+        </div>
+      </div>
+
+      <!-- Slide 11: Final Result -->
+      <div class="question-slide" id="slide-result">
+        <div class="flex items-end justify-between mb-8 pb-4 border-b border-white/10">
+          <div>
+            <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-1">Primary Constraint</p>
+            <h2 id="res-title" class="text-4xl font-black font-display tracking-tight text-white mb-2">Analyzing...</h2>
+            <p id="res-desc" class="text-builder-muted text-sm max-w-lg"></p>
+          </div>
+          <p id="res-conf" class="text-xs font-mono px-2 py-1 bg-white/5 border border-white/10 rounded uppercase text-builder-muted">Signal: --</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 items-center mb-8">
+          <div class="h-48 w-full relative">
+            <canvas id="radarChart"></canvas>
+          </div>
+          <div class="space-y-4">
+            <h3 class="text-xs uppercase tracking-widest font-bold text-builder-muted">Next 14 Days</h3>
+            <ul id="res-plan" class="text-sm font-medium space-y-3 text-slate-200">
+              <!-- Plan injected here -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Detailed Breakdown -->
+        <h3 class="text-xs uppercase tracking-widest font-bold text-builder-muted mb-4 pt-6 border-t border-white/10">Detailed Input Analysis</h3>
+        <div id="res-breakdown" class="space-y-4 mb-8">
+            <!-- Dynamic breakdown injected here -->
+        </div>
+
+        <!-- Book Call CTA -->
+        <div class="mt-8 p-6 border-2 border-accent/20 bg-accent/5 rounded-xl text-center">
+            <h3 class="text-xl font-black font-display text-white tracking-tight mb-2 uppercase">The Next Step: Fix The Math</h3>
+            <p class="text-sm text-builder-muted mb-4 max-w-xl mx-auto leading-relaxed">This diagnostic is directional. It shows you <em>where</em> the pain is coming from, but it cannot tell you <em>why</em> the economics are broken. The only way to plug your escrow leak is to run a rigorous Math & Margin Audit.</p>
+            <a href="https://tidycal.com/jerryjobrien/30-minute-meeting" target="_blank" class="inline-block px-8 py-4 bg-accent text-white font-bold rounded-lg text-sm transition hover:shadow-[0_0_20px_rgba(247,127,0,0.4)] uppercase tracking-wider">Reserve Your Math & Margin Audit</a>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT: Live Console -->
+    <aside class="console-area p-8 hidden md:flex">
+      
+      <div class="mb-10">
+        <p class="text-xs tracking-widest uppercase text-builder-muted font-bold mb-2">Live Escrow (Est. Leakage)</p>
+        <p class="text-5xl font-black font-display text-accent mb-1">$<span id="live-leak" class="ticker-val">0</span> <span class="text-sm text-builder-muted font-medium">/ mo</span></p>
+        <p class="text-[0.65rem] uppercase tracking-wider text-builder-muted opacity-70">Calculating uncaptured margin</p>
+      </div>
+
+      <div class="flex-1 flex flex-col justify-end">
+        <p class="text-[0.65rem] tracking-widest uppercase text-builder-muted font-bold mb-4 border-b border-white/10 pb-2">Analysis Console</p>
+        <div id="console-log" class="console-log space-y-2 flex flex-col-reverse">
+          <div class="log-line text-builder-muted">> Diagnostic initialized.</div>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Connect Logic -->
+  <script src="v2-logic.js"></script>
+
+</body>
+</html>
