@@ -5,934 +5,457 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Founder Bottleneck Diagnostic</title>
 
+  <meta name="description" content="Find the 1 bottleneck slowing your growth in under 60 seconds with our Founder Bottleneck Diagnostic." />
+  <meta property="og:title" content="Founder Bottleneck Diagnostic" />
+  <meta property="og:description" content="Find the 1 bottleneck slowing your growth in under 60 seconds with our Founder Bottleneck Diagnostic." />
+  <meta property="og:type" content="website" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Outfit', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            builder: {
+              bg: '#050505',
+              panel: '#0a0a0a',
+              text: '#ededed',
+              muted: '#888888',
+            },
+            accent: {
+              DEFAULT: '#ff5c00',
+              glow: 'rgba(255, 92, 0, 0.15)'
+            },
+            danger: '#ef4444'
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
     :root {
-      --builder-blue: #264653;
-      --builder-green: #3CAEA3;
-      --builder-orange: #F77F00;
-      --builder-grey: #6B6E70;
-      --builder-base: #FAF9F6;
-
-      --surface: rgba(0, 0, 0, 0.18);
-      --border: rgba(107, 110, 112, 0.55);
-      --muted: rgba(250, 249, 246, 0.72);
-      --accent: var(--builder-orange);
-      --accent-glow: rgba(247, 127, 0, 0.18);
-
-      --danger: #ef4444;
-      --danger-bg: rgba(239, 68, 68, 0.15);
+      --bg: #050505;
+      --panel: #0a0a0a;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #ff5c00;
     }
 
     body {
-      background-color: var(--builder-blue);
-      color: var(--builder-base);
+      background-color: var(--bg);
+      color: #ededed;
       font-family: 'Inter', sans-serif;
-      scroll-behavior: smooth;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
       color-scheme: dark;
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+    h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
+
+    /* The glowing orb that follows the active question */
+    .ambient-glow {
+      position: absolute;
+      width: 60vh;
+      height: 60vh;
+      background: radial-gradient(circle, rgba(255,92,0,0.08) 0%, rgba(0,0,0,0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+      transition: all 0.5s ease-out;
     }
 
-    .glow { box-shadow: 0 0 20px var(--accent-glow); }
-    .hidden { display: none; }
-
-    input[type="checkbox"]:checked + label {
-      border-color: var(--accent);
-      background: rgba(247, 127, 0, 0.14);
+    /* Layout Split */
+    .split-container {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
     }
 
-    select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23FAF9F6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 1rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      background-color: var(--surface);
-      color: var(--builder-base);
-      border: 1px solid var(--border);
+    /* Left Side: Active Question Area */
+    .q-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      z-index: 10;
     }
 
-    select:focus {
-      outline: none;
-      border-color: rgba(247,127,0,0.85);
-      box-shadow: 0 0 0 3px rgba(247,127,0,0.18);
+    /* Right Side: Live Diagnostic Console */
+    .console-area {
+      width: 400px;
+      background-color: var(--panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
     }
 
-    select option {
-      background-color: var(--builder-blue);
-      color: var(--builder-base);
+    /* Progress Bar */
+    .progress-bar-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      z-index: 30;
     }
-
-    .badge-high { background: rgba(60,174,163,0.22); border: 1px solid var(--builder-green); color: var(--builder-base); }
-    .badge-med  { background: rgba(247,127,0,0.22); border: 1px solid var(--builder-orange); color: var(--builder-base); }
-    .badge-low  { background: rgba(0,0,0,0.12); border: 1px solid var(--border); color: var(--muted); }
-
-    .link {
-      color: var(--accent);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    .btn {
+    .progress-bar-fill {
+      height: 100%;
       background: var(--accent);
-      border-radius: 12px;
-      font-weight: 800;
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .btn:active { transform: translateY(1px); }
+    /* Question Cards */
+    .question-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10%;
+      opacity: 0;
+      transform: translateX(40px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .question-slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    
+    .question-slide.done {
+      opacity: 0;
+      transform: translateX(-40px);
+      pointer-events: none;
+    }
+
+    /* Answer Choices (Keyboard Navigable) */
+    .choice-btn {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      padding: 1.25rem 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #ededed;
+      font-size: 1.125rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .choice-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .choice-btn:active, .choice-btn.selected {
+      background: rgba(255, 92, 0, 0.1);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .key-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: rgba(0,0,0,0.4);
+      font-family: monospace;
+    }
+
+    .choice-btn:hover .key-hint, .choice-btn.selected .key-hint {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Ticker styles */
+    .ticker-val {
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s;
+    }
+
+    .console-log {
+      max-height: 50%;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .log-line {
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: fadeIn 0.3s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* Fix responsive for mobile */
+    @media (max-width: 1024px) {
+      .split-container { flex-direction: column; }
+      .console-area { width: 100%; height: auto; border-left: none; border-top: 1px solid var(--border); flex: 0 0 auto; }
+      .q-area { padding: 2rem; }
+      .question-slide { padding: 5%; }
+    }
   </style>
 </head>
 
-<body class="p-6 md:p-12">
-  <div class="max-w-2xl mx-auto">
-    <header class="mb-12 text-center">
-      <h1 class="text-3xl md:text-4xl font-black text-[var(--builder-base)] mb-3">
-        Founder <span class="text-[var(--accent)]">Bottleneck</span> Diagnostic
-      </h1>
-      <p class="text-sm md:text-base text-[var(--builder-base)] font-semibold">
-        Find the 1 bottleneck slowing your growth in under 60 seconds
-      </p>
-      <p class="mt-2 text-xs tracking-wide uppercase text-[var(--muted)]">
-        Answer a few quick questions to see whether the real constraint is demand, conversion, delivery, or founder dependency
-      </p>
-    </header>
-
-    <div id="runtime-error" class="hidden mb-6 p-4 rounded-lg border border-[var(--danger)] bg-[var(--danger-bg)] text-red-200 text-sm"></div>
-
-    <section id="intro" class="space-y-6">
-      <div class="p-8 card glow border-[var(--accent)]/40 text-center">
-        <p class="text-xs tracking-widest uppercase text-[var(--accent)] font-bold mb-3">
-          Quick Diagnostic
-        </p>
-
-        <h2 class="text-2xl md:text-3xl font-black text-[var(--builder-base)] mb-3">
-          Founder Bottleneck Diagnostic
-        </h2>
-
-        <p class="text-sm md:text-base text-[var(--builder-base)] font-semibold mb-4">
-          Find the 1 bottleneck slowing your growth in under 60 seconds
-        </p>
-
-        <p class="text-sm text-[var(--muted)] leading-relaxed max-w-xl mx-auto">
-          This is a quick diagnostic, not a full audit. It gives you a directional read on the most likely bottleneck based on your inputs.
-          For a more accurate diagnosis, the next step is a deeper Math &amp; Margin Audit covering pricing, margins, acquisition efficiency, and founder dependency.
-        </p>
-
-        <button id="btn-intro" type="button" class="mt-8 w-full md:w-auto px-8 py-4 btn glow">
-          Start Diagnostic
-        </button>
-      </div>
-    </section>
-
-    <section id="step-1" class="space-y-6 hidden">
-      <div class="space-y-2">
-        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">Where is growth breaking first?</h2>
-        <p class="text-sm text-[var(--muted)]">Pick the top 1–2 symptoms. More than that creates noise.</p>
-        <p id="selection-error" class="text-sm text-red-300 hidden italic">Select 1 or 2 symptoms to continue.</p>
-        <p id="selection-max" class="text-sm text-yellow-200 hidden italic">You can only pick 2. Uncheck one to choose another.</p>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3">
-        <input type="checkbox" id="sym-leads" class="symptom hidden">
-        <label for="sym-leads" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We need more qualified leads</label>
-
-        <input type="checkbox" id="sym-everything" class="symptom hidden">
-        <label for="sym-everything" class="block p-4 card cursor-pointer hover:border-slate-500 transition">We’ve tried multiple fixes and growth is still stuck</label>
-
-        <input type="checkbox" id="sym-overwhelmed" class="symptom hidden">
-        <label for="sym-overwhelmed" class="block p-4 card cursor-pointer hover:border-slate-500 transition">The team is overloaded</label>
-
-        <input type="checkbox" id="sym-harder" class="symptom hidden">
-        <label for="sym-harder" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Growth still depends too much on me</label>
-
-        <input type="checkbox" id="sym-flat" class="symptom hidden">
-        <label for="sym-flat" class="block p-4 card cursor-pointer hover:border-slate-500 transition">Revenue has stalled</label>
-      </div>
-
-      <button id="btn-step1" type="button" class="w-full py-4 btn glow">Continue to Constraint Analysis →</button>
-    </section>
-
-    <section id="step-2" class="space-y-6 hidden">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold border-l-4 border-[var(--accent)] pl-4">Constraint Analysis</h2>
-        <button id="btn-back-step2" type="button" class="text-xs text-[var(--muted)] hover:text-[var(--builder-base)] transition underline">← Back</button>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Annual Revenue</label>
-          <select id="rev" class="w-full p-4 card">
-            <option value="low">Under $1M</option>
-            <option value="mid" selected>$1M – $3M</option>
-            <option value="high">$3M – $10M</option>
-            <option value="scale">$10M+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Inbound leads (last 7 days)</label>
-          <select id="leads7" class="w-full p-4 card">
-            <option value="0-5">0–5</option>
-            <option value="6-20">6–20</option>
-            <option value="21-50" selected>21–50</option>
-            <option value="51-100">51–100</option>
-            <option value="101-200">101–200</option>
-            <option value="200+">200+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Qualified-fit rate</label>
-          <p class="text-xs text-[var(--muted)] mb-2">Of the leads you get, how many are actually a fit for your offer?</p>
-          <select id="fitPct" class="w-full p-4 card">
-            <option value="low">Very few (&lt;20%)</option>
-            <option value="mid" selected>Some (20–40%)</option>
-            <option value="high">Many (40–70%)</option>
-            <option value="elite">Most (70%+)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Lead intent / seriousness</label>
-          <select id="leadQuality" class="w-full p-4 card">
-            <option value="low">Mostly unqualified</option>
-            <option value="mid" selected>Mixed</option>
-            <option value="high">Mostly qualified</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Speed to first response (lead → first reply)</label>
-          <select id="speed" class="w-full p-4 card">
-            <option value="elite">Under 1 minute</option>
-            <option value="fast">1–5 minutes</option>
-            <option value="leak" selected>5–15 minutes</option>
-            <option value="broken">15+ minutes / same day</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Follow-up attempts per lead</label>
-          <select id="followup" class="w-full p-4 card">
-            <option value="low">1–2</option>
-            <option value="mid" selected>3–5</option>
-            <option value="high">6–9</option>
-            <option value="elite">10+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Calls booked (last 7 days)</label>
-          <select id="calls7" class="w-full p-4 card">
-            <option value="0-2">0–2</option>
-            <option value="3-5">3–5</option>
-            <option value="6-10">6–10</option>
-            <option value="11-20">11–20</option>
-            <option value="21-40">21–40</option>
-            <option value="41+">41+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Close rate</label>
-          <select id="closeRate" class="w-full p-4 card">
-            <option value="low">&lt;15%</option>
-            <option value="mid" selected>15% – 30%</option>
-            <option value="high">30% – 60%</option>
-            <option value="elite">60%+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">Delivery capacity</label>
-          <select id="capacity" class="w-full p-4 card">
-            <option value="low" selected>&lt;50%</option>
-            <option value="mid">50–80%</option>
-            <option value="high">80%+</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-[var(--muted)] mb-2 uppercase tracking-wider">If you stepped away for 7 days, what stalls?</label>
-          <select id="stall" class="w-full p-4 card">
-            <option value="sales">Sales</option>
-            <option value="delivery">Delivery</option>
-            <option value="decisions">Decisions</option>
-            <option value="nothing">Nothing</option>
-          </select>
-        </div>
-      </div>
-
-      <button id="btn-step2" type="button" class="w-full py-4 btn glow">See My Bottleneck</button>
-    </section>
-
-    <section id="result" class="hidden space-y-6">
-      <div class="p-8 card glow border-[var(--accent)]/50">
-        <button id="btn-back-result" type="button" class="mb-4 text-xs text-[var(--muted)] hover:text-[var(--builder-base)] transition underline">← Back to answers</button>
-
-        <div class="flex justify-between mb-4">
-          <span class="text-[var(--accent)] text-xs font-bold tracking-widest uppercase">Primary Bottleneck</span>
-          <span id="confidence-badge" class="text-xs font-bold px-2 py-1 rounded uppercase italic"></span>
-        </div>
-
-        <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div>
-            <p class="text-xs text-[var(--muted)] font-bold uppercase">Estimated Revenue at Risk</p>
-            <p class="text-5xl font-black text-[var(--builder-base)]">$<span id="revenue-leak">0</span> <span class="text-sm text-[var(--muted)] font-medium">/ month</span></p>
-            <p class="text-xs text-[var(--muted)] mt-2">Directional estimate based on revenue tier and the current constraint pattern.</p>
-          </div>
-          <div class="h-32">
-            <canvas id="leakChart"></canvas>
-          </div>
-        </div>
-
-        <h2 id="constraint-title" class="text-3xl font-black text-[var(--builder-base)] mb-2"></h2>
-        <p id="constraint-desc" class="text-slate-200 leading-relaxed"></p>
-
-        <div class="mt-4 p-4 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)]">
-          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Why this is happening</p>
-          <ul id="constraint-why" class="text-sm text-slate-200 list-disc ml-5 space-y-1"></ul>
-        </div>
-
-        <div class="mt-4 p-4 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)]">
-          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Likely Economic Constraint</p>
-          <p id="economic-constraint-title" class="text-base font-bold text-[var(--builder-base)] mb-1"></p>
-          <p id="economic-constraint-desc" class="text-sm text-slate-200"></p>
-        </div>
-
-        <div id="constraint-not" class="mt-3 text-xs text-[var(--muted)] italic"></div>
-
-        <p class="mt-3 text-xs text-[var(--muted)] italic">This result is based on where qualified demand, conversion, delivery, or founder dependency is breaking down first.</p>
-
-        <p id="secondary-constraint" class="text-sm text-[var(--muted)] mt-4"></p>
-
-        <div id="constraint-drivers" class="mt-3 text-xs text-[var(--muted)]"></div>
-
-        <div id="why-not-volume" class="mt-4 hidden p-4 rounded-lg border border-[var(--accent)]/30 bg-[rgba(247,127,0,0.10)] text-sm text-slate-100">
-          <p class="font-bold text-[var(--accent)] mb-1">Why more leads will not fix this first</p>
-          <p id="why-not-volume-text"></p>
-        </div>
-
-        <div class="mt-4">
-          <button id="toggle-sim" type="button" class="text-xs link">What happens if you double traffic right now?</button>
-          <p id="sim-result" class="mt-2 text-xs text-[var(--muted)] hidden"></p>
-        </div>
-
-        <details class="mt-6 rounded-lg border border-[var(--border)] bg-[rgba(0,0,0,0.16)] p-4">
-          <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Review diagnosis inputs</summary>
-          <pre id="input-summary" class="mt-3 text-xs text-slate-200 whitespace-pre-wrap"></pre>
-        </details>
-
-        <div class="mt-8 pt-6 border-t border-[var(--border)]">
-          <h3 class="font-bold text-[var(--accent)] mb-3 uppercase tracking-tighter">14-Day Fix Plan</h3>
-          <p id="fix-plan" class="text-slate-100 bg-[rgba(0,0,0,0.18)] p-4 rounded-lg border-l-2 border-[var(--accent)] italic whitespace-pre-line"></p>
-        </div>
-
-        <div class="mt-6 p-5 rounded-lg border border-[var(--accent)]/30 bg-[rgba(247,127,0,0.10)]">
-          <p class="text-sm text-slate-100">
-            This is a quick diagnostic, not a full audit. It identifies the most likely bottleneck based on your inputs.
-            For a more authoritative diagnosis, the next step is a deeper Math &amp; Margin Audit to review pricing, margins, acquisition efficiency, and founder dependency.
-          </p>
-        </div>
-
-        <div class="mt-4 p-5 rounded-lg border border-[var(--accent)] bg-[rgba(247,127,0,0.12)]">
-          <p class="text-xs uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Next Step</p>
-          <h3 class="text-xl font-black text-[var(--builder-base)] mb-2">Book a Free 30-Minute Math &amp; Margin Audit</h3>
-          <p id="cta-copy" class="text-sm text-slate-100 mb-4"></p>
-          <a
-            id="cta-link"
-            href="https://tidycal.com/jerryjobrien/30-minute-meeting"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-block px-5 py-3 btn glow text-[var(--builder-base)]"
-          >
-            Book My Math &amp; Margin Audit
-          </a>
-        </div>
-
-        <button id="btn-reset" type="button" class="mt-8 w-full py-3 text-[var(--muted)] text-sm hover:text-[var(--builder-base)] transition">↺ Start Over</button>
-      </div>
-    </section>
+<body>
+  
+  <div class="progress-bar-container">
+    <div id="progress" class="progress-bar-fill"></div>
   </div>
 
-  <script>
-  (() => {
-    "use strict";
+  <div class="ambient-glow" id="glow"></div>
+
+  <main class="split-container">
+    
+    <!-- LEFT: Interactive Question Flow -->
+    <section class="q-area relative">
+      
+      <!-- Slide 0: Intro -->
+      <div class="question-slide active" id="slide-0">
+        <p class="text-accent text-sm font-bold tracking-widest uppercase mb-4">Founder Diagnostic</p>
+        <h1 class="text-6xl font-black font-display tracking-tight mb-6">Identify your growth bottleneck.</h1>
+        <p class="text-xl text-builder-muted mb-10 max-w-xl">This is a mechanical analysis. We will isolate whether your constraint is demand, conversion, delivery, or your own dependency.</p>
+        <button class="w-max choice-btn !bg-accent !text-white !border-accent hover:opacity-90 transition-opacity" onclick="nextSlide()">
+          Begin Analysis → <span class="key-hint !text-white !border-white/40 ml-4">Enter</span>
+        </button>
+      </div>
+
+      <!-- Slide 1: Symptoms -->
+      <div class="question-slide" id="slide-1">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">01 / 10 • Symptoms</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Where is growth breaking first?</h2>
+        <p class="text-sm text-builder-muted mb-8">Select the primary symptom you are feeling right now.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'leads')"><span class="key-hint">1</span> We need more qualified leads</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'everything')"><span class="key-hint">2</span> We’ve tried multiple fixes and growth is still stuck</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'overwhelmed')"><span class="key-hint">3</span> The team is overloaded</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'harder')"><span class="key-hint">4</span> Growth still depends too much on me</button>
+          <button class="choice-btn" onclick="selectAnswer(1, 'sym', 'flat')"><span class="key-hint">5</span> Revenue has stalled entirely</button>
+        </div>
+      </div>
+
+      <!-- Slide 2: Revenue -->
+      <div class="question-slide" id="slide-2">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">02 / 10 • Scale</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">What is your annual revenue tier?</h2>
+        <p class="text-sm text-builder-muted mb-8">This determines capacity breakpoints and margin structure.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'low')"><span class="key-hint">1</span> Under $1M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'mid')"><span class="key-hint">2</span> $1M – $3M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'high')"><span class="key-hint">3</span> $3M – $10M</button>
+          <button class="choice-btn" onclick="selectAnswer(2, 'rev', 'scale')"><span class="key-hint">4</span> $10M+</button>
+        </div>
+      </div>
+
+      <!-- Slide 3: Inbound Volume -->
+      <div class="question-slide" id="slide-3">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">03 / 10 • Volume</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Inbound leads (Last 7 Days)</h2>
+        <p class="text-sm text-builder-muted mb-8">How many fresh conversations are hitting the pipeline?</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '0-5')"><span class="key-hint">1</span> 0–5</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '6-20')"><span class="key-hint">2</span> 6–20</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '21-50')"><span class="key-hint">3</span> 21–50</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '51-100')"><span class="key-hint">4</span> 51–100</button>
+          <button class="choice-btn" onclick="selectAnswer(3, 'leads7', '100+')"><span class="key-hint">5</span> 100+</button>
+        </div>
+      </div>
+
+      <!-- Slide 4: Fit Rate -->
+      <div class="question-slide" id="slide-4">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">04 / 10 • Qualification</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Qualified-fit rate</h2>
+        <p class="text-sm text-builder-muted mb-8">Of the leads you get, how many are actually a fit for your offer (ICP)?</p>
+        
+        <div class="grid grid-cols-2 gap-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'low')"><span class="key-hint">1</span> Very few (&lt;20%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'mid')"><span class="key-hint">2</span> Some (20–40%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'high')"><span class="key-hint">3</span> Many (40–70%)</button>
+          <button class="choice-btn" onclick="selectAnswer(4, 'fitPct', 'elite')"><span class="key-hint">4</span> Most (70%+)</button>
+        </div>
+      </div>
+
+      <!-- Slide 5: Speed -->
+      <div class="question-slide" id="slide-5">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">05 / 10 • Mechanics</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Speed to first response</h2>
+        <p class="text-sm text-builder-muted mb-8">Time elapsed between lead capture and first human/custom reply.</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'elite')"><span class="key-hint">1</span> Under 1 minute</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'fast')"><span class="key-hint">2</span> 1–5 minutes</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'leak')"><span class="key-hint">3</span> 5–15 minutes</button>
+          <button class="choice-btn" onclick="selectAnswer(5, 'speed', 'broken')"><span class="key-hint">4</span> 15+ minutes / same day</button>
+        </div>
+      </div>
+
+      <!-- Slide 6: Followup -->
+      <div class="question-slide" id="slide-6">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">06 / 10 • Mechanics</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Follow-up attempts per lead</h2>
+        
+        <div class="space-y-3 max-w-2xl mt-8">
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'low')"><span class="key-hint">1</span> 1–2 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'mid')"><span class="key-hint">2</span> 3–5 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'high')"><span class="key-hint">3</span> 6–9 attempts</button>
+          <button class="choice-btn" onclick="selectAnswer(6, 'followup', 'elite')"><span class="key-hint">4</span> 10+ attempts</button>
+        </div>
+      </div>
+
+      <!-- Slide 7: Close Rate -->
+      <div class="question-slide" id="slide-7">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">07 / 10 • Conversion</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Win / Close Rate</h2>
+        <p class="text-sm text-builder-muted mb-8">Percentage of held sales calls that convert to closed-won revenue.</p>
+        
+        <div class="grid grid-cols-2 gap-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'low')"><span class="key-hint">1</span> &lt;15%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'mid')"><span class="key-hint">2</span> 15% – 30%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'high')"><span class="key-hint">3</span> 30% – 60%</button>
+          <button class="choice-btn" onclick="selectAnswer(7, 'closeRate', 'elite')"><span class="key-hint">4</span> 60%+</button>
+        </div>
+      </div>
+
+      <!-- Slide 8: Capacity -->
+      <div class="question-slide" id="slide-8">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">08 / 10 • Delivery</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">Current Delivery Capacity</h2>
+        <p class="text-sm text-builder-muted mb-8">How heavily loaded is your fulfillment team?</p>
+        
+        <div class="space-y-3 max-w-2xl">
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'low')"><span class="key-hint">1</span> &lt;50% (Room to scale)</button>
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'mid')"><span class="key-hint">2</span> 50–80% (Healthy load)</button>
+          <button class="choice-btn" onclick="selectAnswer(8, 'capacity', 'high')"><span class="key-hint">3</span> 80%+ (Straining or breaking)</button>
+        </div>
+      </div>
+
+      <!-- Slide 9: Dependency -->
+      <div class="question-slide" id="slide-9">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">09 / 10 • Structure</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-2">If you stepped away for 7 days, what breaks?</h2>
+        
+        <div class="space-y-3 max-w-2xl mt-8">
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'sales')"><span class="key-hint">1</span> Sales pipeline stalls</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'delivery')"><span class="key-hint">2</span> Delivery errors spike</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'decisions')"><span class="key-hint">3</span> Decisions queue up on my desk</button>
+          <button class="choice-btn" onclick="selectAnswer(9, 'stall', 'nothing')"><span class="key-hint">4</span> Nothing (Team operates without me)</button>
+        </div>
+      </div>
+
+      <!-- Slide 10: Email Gate -->
+      <div class="question-slide" id="slide-10">
+        <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-4">10 / 10 • Complete</p>
+        <h2 class="text-4xl font-black font-display tracking-tight mb-4">Analysis Ready.</h2>
+        <p class="text-sm text-builder-muted mb-2">Enter your best email to instantly see your primary bottleneck and receive a full detailed diagnostic report in your inbox.</p>
+        <p class="text-sm text-accent font-bold mb-8">Scaling without fixing the underlying math will only accelerate the bleed.</p>
+        
+        <div class="max-w-xl">
+          <input type="email" id="user-email" placeholder="founder@company.com" class="w-full text-xl bg-transparent border-b-2 border-white/20 text-white placeholder-white/20 py-4 focus:outline-none focus:border-accent transition-colors mb-8" required>
+          <button class="w-full justify-center choice-btn !bg-accent !text-white !border-accent hover:opacity-90 transition-opacity" onclick="submitAnalysis()">
+            Reveal Result <span class="key-hint !text-white !border-white/40 ml-4">Enter</span>
+          </button>
+          <p id="email-err" class="text-danger text-sm mt-3 hidden">Please enter a valid email address to continue.</p>
+        </div>
+      </div>
+
+      <!-- Slide 11: Final Result -->
+      <div class="question-slide" id="slide-result">
+        <div class="flex items-end justify-between mb-8 pb-4 border-b border-white/10">
+          <div>
+            <p class="text-builder-muted text-xs font-bold tracking-widest uppercase mb-1">Primary Constraint</p>
+            <h2 id="res-title" class="text-4xl font-black font-display tracking-tight text-white mb-2">Analyzing...</h2>
+            <p id="res-desc" class="text-builder-muted text-sm max-w-lg"></p>
+          </div>
+          <p id="res-conf" class="text-xs font-mono px-2 py-1 bg-white/5 border border-white/10 rounded uppercase text-builder-muted">Signal: --</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 items-center mb-8">
+          <div class="h-48 w-full relative">
+            <canvas id="radarChart"></canvas>
+          </div>
+          <div class="space-y-4">
+            <h3 class="text-xs uppercase tracking-widest font-bold text-builder-muted">Next 14 Days</h3>
+            <ul id="res-plan" class="text-sm font-medium space-y-3 text-slate-200">
+              <!-- Plan injected here -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Detailed Breakdown -->
+        <h3 class="text-xs uppercase tracking-widest font-bold text-builder-muted mb-4 pt-6 border-t border-white/10">Detailed Input Analysis</h3>
+        <div id="res-breakdown" class="space-y-4 mb-8">
+            <!-- Dynamic breakdown injected here -->
+        </div>
+
+        <!-- Book Call CTA -->
+        <div class="mt-8 p-6 border-2 border-accent/20 bg-accent/5 rounded-xl text-center">
+            <h3 class="text-xl font-black font-display text-white tracking-tight mb-2 uppercase">The Next Step: Fix The Math</h3>
+            <p class="text-sm text-builder-muted mb-4 max-w-xl mx-auto leading-relaxed">This diagnostic is directional. It shows you <em>where</em> the pain is coming from, but it cannot tell you <em>why</em> the economics are broken. The only way to plug your escrow leak is to run a rigorous Math & Margin Audit.</p>
+            <a href="https://tidycal.com/jerryjobrien/30-minute-meeting" target="_blank" class="inline-block px-8 py-4 bg-accent text-white font-bold rounded-lg text-sm transition hover:shadow-[0_0_20px_rgba(247,127,0,0.4)] uppercase tracking-wider">Reserve Your Math & Margin Audit</a>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT: Live Console -->
+    <aside class="console-area p-8 hidden md:flex">
+      
+      <div class="mb-10">
+        <p class="text-xs tracking-widest uppercase text-builder-muted font-bold mb-2">Live Escrow (Est. Leakage)</p>
+        <p class="text-5xl font-black font-display text-accent mb-1">$<span id="live-leak" class="ticker-val">0</span> <span class="text-sm text-builder-muted font-medium">/ mo</span></p>
+        <p class="text-[0.65rem] uppercase tracking-wider text-builder-muted opacity-70">Calculating uncaptured margin</p>
+      </div>
+
+      <div class="flex-1 flex flex-col justify-end">
+        <p class="text-[0.65rem] tracking-widest uppercase text-builder-muted font-bold mb-4 border-b border-white/10 pb-2">Analysis Console</p>
+        <div id="console-log" class="console-log space-y-2 flex flex-col-reverse">
+          <div class="log-line text-builder-muted">> Diagnostic initialized.</div>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Connect Logic -->
+  <script src="v2-logic.js"></script>
 
-    const NL = "\n";
-    let chartInstance = null;
-    let simOpen = false;
-
-    const $ = (id) => document.getElementById(id);
-
-    function showRuntimeError(msg) {
-      const box = $("runtime-error");
-      if (!box) return;
-      box.textContent = msg;
-      box.classList.remove("hidden");
-    }
-
-    window.addEventListener("error", (e) => {
-      const msg = e && e.message ? String(e.message) : "Unknown script error";
-      showRuntimeError("JavaScript error: " + msg + ". Open DevTools Console for details.");
-    });
-
-    function setStep1Message(mode) {
-      const err = $("selection-error");
-      const max = $("selection-max");
-      if (err) err.classList.add("hidden");
-      if (max) max.classList.add("hidden");
-      if (mode === "error" && err) err.classList.remove("hidden");
-      if (mode === "max" && max) max.classList.remove("hidden");
-    }
-
-    function wireSymptomLimiter() {
-      const boxes = document.querySelectorAll(".symptom");
-      boxes.forEach((cb) => {
-        cb.addEventListener("change", () => {
-          const checked = document.querySelectorAll(".symptom:checked");
-          if (cb.checked && checked.length > 2) {
-            cb.checked = false;
-            setStep1Message("max");
-            return;
-          }
-          if (checked.length <= 2) setStep1Message(null);
-        });
-      });
-    }
-
-    function goToStep(stepId) {
-      const intro = $("intro"), s1 = $("step-1"), s2 = $("step-2"), res = $("result");
-      if (intro) intro.classList.add("hidden");
-      if (s1) s1.classList.add("hidden");
-      if (s2) s2.classList.add("hidden");
-      if (res) res.classList.add("hidden");
-
-      const target = $(stepId);
-      if (target) target.classList.remove("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function validateStep1() {
-      const checks = document.querySelectorAll('#step-1 input[type="checkbox"]:checked');
-      if (!checks || checks.length < 1 || checks.length > 2) {
-        setStep1Message("error");
-        return;
-      }
-      setStep1Message(null);
-      goToStep("step-2");
-    }
-
-    function toggleSimulation() {
-      const sim = $("sim-result");
-      if (!sim) return;
-      simOpen = !simOpen;
-      if (!simOpen) {
-        sim.classList.add("hidden");
-        return;
-      }
-      sim.textContent = "If traffic doubled today, speed, follow-up, and delivery would be stressed before revenue meaningfully increases. Translation: scale breaks before it pays unless leverage improves first.";
-      sim.classList.remove("hidden");
-    }
-
-    const REV_MIDPOINT = {
-      low: 75000,
-      mid: 167000,
-      high: 542000,
-      scale: 1000000
-    };
-
-    const LEAK_MULT = {
-      VOL: 0.18,
-      CON: 0.12,
-      DEL: 0.15,
-      STR: 0.10,
-    };
-
-    const TIE_PRIORITY = ["DEL", "CON", "VOL", "STR"];
-
-    const ECONOMIC_DATA = {
-      VOL: {
-        title: "Weak acquisition efficiency",
-        desc: "This usually points to a deeper economics issue around some mix of CAC, pricing, close rate, and LTV. The problem may look like volume, but the real constraint is often that growth is not economically efficient enough yet."
-      },
-      CON: {
-        title: "Value-to-acquisition mismatch",
-        desc: "This often means the business is generating attention, but the offer economics are not strong enough to convert demand efficiently. Pricing, proof, offer structure, and payback speed are usually the next numbers to pressure-test."
-      },
-      DEL: {
-        title: "Margin compression",
-        desc: "This usually points to thin margins, inconsistent fulfillment costs, underpricing, or churn pressure. Delivery stress is often a sign that the model cannot support scale cleanly at the current economics."
-      },
-      STR: {
-        title: "Insufficient margin to replace founder involvement profitably",
-        desc: "The founder dependency you are seeing is usually a surface-level operating symptom of a deeper economics issue. The business often does not yet have the margin structure, pricing power, or management design needed to replace founder involvement profitably."
-      }
-    };
-
-    function sortScores(scores) {
-      const pri = (k) => TIE_PRIORITY.indexOf(k);
-      return Object.entries(scores).sort((a, b) => {
-        if (b[1] !== a[1]) return b[1] - a[1];
-        return pri(a[0]) - pri(b[0]);
-      });
-    }
-
-    function confidenceFromGap(gap) {
-      if (gap >= 4) return "High";
-      if (gap >= 2) return "Medium";
-      return "Low";
-    }
-
-    function capConfidenceBySample(conf, calls7) {
-      if (calls7 === "0-2") return "Low";
-      if (calls7 === "3-5" && conf === "High") return "Medium";
-      return conf;
-    }
-
-    function confMod(conf) {
-      if (conf === "High") return 1.0;
-      if (conf === "Medium") return 0.75;
-      return 0.5;
-    }
-
-    function calcLeak(rev, key, conf) {
-      const base = REV_MIDPOINT[rev] || 167000;
-      const mult = LEAK_MULT[key] || 0.10;
-      return Math.round(base * mult * confMod(conf));
-    }
-
-    function setBadge(conf) {
-      const b = $("confidence-badge");
-      if (!b) return;
-      if (conf === "High") {
-        b.textContent = "Signal Strength: High";
-        b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-high";
-      } else if (conf === "Medium") {
-        b.textContent = "Signal Strength: Medium";
-        b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-med";
-      } else {
-        b.textContent = "Signal Strength: Low";
-        b.className = "text-xs font-bold px-2 py-1 rounded uppercase italic badge-low";
-      }
-    }
-
-    function renderChart(kept, leak) {
-      const canvas = $("leakChart");
-      if (!canvas) return;
-      if (typeof Chart === "undefined") return;
-
-      const ctx = canvas.getContext("2d");
-      if (chartInstance) chartInstance.destroy();
-
-      chartInstance = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Kept", "Leaked"],
-          datasets: [{
-            data: [kept, leak],
-            backgroundColor: ["#6B6E70", "#F77F00"],
-            borderWidth: 0,
-          }],
-        },
-        options: {
-          cutout: "80%",
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-        },
-      });
-    }
-
-    function inboundToCount(leads7) {
-      const map = {
-        "0-5": 3,
-        "6-20": 10,
-        "21-50": 25,
-        "51-100": 75,
-        "101-200": 150,
-        "200+": 250,
-      };
-      return map[leads7] ?? 0;
-    }
-
-    function fitToMult(fitPct) {
-      const map = { low: 0.15, mid: 0.30, high: 0.55, elite: 0.85 };
-      return map[fitPct] ?? 0.30;
-    }
-
-    function intentAdj(leadQuality) {
-      const map = { low: 0.80, mid: 1.0, high: 1.15 };
-      return map[leadQuality] ?? 1.0;
-    }
-
-    function speedLabel(speed) {
-      if (speed === "elite") return "Under 1 minute";
-      if (speed === "fast") return "1–5 minutes";
-      if (speed === "leak") return "5–15 minutes";
-      return "15+ minutes / same day";
-    }
-
-    function followupLabel(fu) {
-      if (fu === "low") return "1–2";
-      if (fu === "mid") return "3–5";
-      if (fu === "high") return "6–9";
-      return "10+";
-    }
-
-    const FIX_DATA = {
-      VOL: {
-        title: "Qualified Demand Constraint",
-        desc: "You are generating leads, but too few qualified conversations are forming. Demand exists, but fit, intent, speed, or follow-up is reducing effective volume.",
-        why: [
-          "Qualified conversations are too few relative to your delivery capacity",
-          "Fit and intent are suppressing real demand",
-          "Adding traffic now would amplify noise before outcomes improve",
-        ],
-        not: "Delivery is not saturated and founder absence does not materially stall outcomes.",
-        fix: (ctx) => {
-          const reps = ({ low: 25, mid: 35, high: 50, scale: 60 })[ctx.rev] || 35;
-          const calls = ({ low: 6, mid: 10, high: 14, scale: 18 })[ctx.rev] || 10;
-
-          const lines = [];
-          lines.push("Days 1-7: tighten qualification, response speed, and follow-up discipline to stop leaking demand you already created.");
-          lines.push("Days 8-14: pressure-test CAC, close rate, pricing, and LTV to see whether the economics support scaling demand cleanly.");
-          lines.push("Daily reps: " + reps + " targeted touches to ICP-matched prospects.");
-          lines.push("Win by Day 14: " + calls + " qualified booked calls.");
-          return lines.join("\n");
-        },
-      },
-
-      CON: {
-        title: "Conversion Constraint",
-        desc: "You have demand signals, but conversion is weak. The offer, positioning, or sales path is adding friction.",
-        why: [
-          "Leads are responding but not progressing",
-          "Conversion rate lags despite activity",
-          "Friction exists in the offer or sales path",
-        ],
-        not: "Traffic exists and delivery is not saturated.",
-        fix: (ctx) => {
-          const variants = ({ low: 2, mid: 3, high: 4, scale: 5 })[ctx.rev] || 3;
-          return [
-            "Days 1-7: identify the biggest conversion friction in your offer, proof, positioning, or next-step process.",
-            "Days 8-14: pressure-test the economics behind conversion, including pricing strength, CAC efficiency, close rate, and payback speed.",
-            "Build " + variants + " offer variants (headline + promise + guarantee).",
-          ].join("\n");
-        },
-      },
-
-      DEL: {
-        title: "Delivery Constraint",
-        desc: "Capacity is the bottleneck. Delivery is overloaded, custom, or inconsistent.",
-        why: [
-          "Delivery utilization is near or above capacity",
-          "Custom work is slowing throughput",
-          "Fulfillment speed limits growth",
-        ],
-        not: "Demand exists, but delivery cannot keep up.",
-        fix: () => [
-          "Days 1-7: stabilize delivery by reducing custom work, tightening scope, and standardizing the main fulfillment path.",
-          "Days 8-14: review the economics underneath delivery stress, especially margins, fulfillment cost consistency, pricing, and churn pressure.",
-          "Productize the #1 service clients buy.",
-        ].join("\n"),
-      },
-
-      STR: {
-        title: "Founder Dependency Constraint",
-        desc: "Growth is still too dependent on founder involvement. Decisions, escalations, or conversion still route through you, which slows throughput and makes scale fragile.",
-        why: [
-          "Decisions stall without the founder",
-          "Execution slows down when you step away",
-          "The team lacks enough authority, structure, or margin-supported support around them",
-        ],
-        not: "This is not mainly a leads problem or a pure delivery problem. The business is still relying too heavily on founder involvement to keep moving.",
-        fix: (ctx) => {
-          const looms = ({ low: 6, mid: 10, high: 14, scale: 18 })[ctx.rev] || 10;
-          return [
-            "Days 1-7: map where the founder is still acting as closer, decision desk, or escalation layer.",
-            "Days 8-14: review whether pricing, margins, role design, and management structure are strong enough to replace founder involvement profitably.",
-            "Record " + looms + " Looms replacing repeat explanations.",
-          ].join("\n");
-        },
-      },
-    };
-
-    function mechanicsFirstBlock(ctx) {
-      const speedElite = (ctx.speed === "elite");
-      const followElite = (ctx.followup === "elite");
-      if (speedElite && followElite) return "";
-
-      const lines = [];
-      lines.push("Mechanics first (Days 1–3):");
-
-      if (!speedElite) {
-        lines.push("- Speed: move to under 1 minute (current: " + speedLabel(ctx.speed) + ").");
-      }
-      if (!followElite) {
-        lines.push("- Follow-up: move to 10+ attempts (current: " + followupLabel(ctx.followup) + ").");
-      }
-
-      lines.push("Rule: no lead dies before attempt #10 unless disqualified.");
-      return lines.join(NL);
-    }
-
-    function calculateFix() {
-      const ctx = {
-        rev: $("rev") ? $("rev").value : "mid",
-        leads7: $("leads7") ? $("leads7").value : "21-50",
-        fitPct: $("fitPct") ? $("fitPct").value : "mid",
-        leadQuality: $("leadQuality") ? $("leadQuality").value : "mid",
-        speed: $("speed") ? $("speed").value : "leak",
-        followup: $("followup") ? $("followup").value : "mid",
-        calls7: $("calls7") ? $("calls7").value : "0-2",
-        closeRate: $("closeRate") ? $("closeRate").value : "mid",
-        capacity: $("capacity") ? $("capacity").value : "low",
-        stall: $("stall") ? $("stall").value : "sales",
-        symptoms: [],
-      };
-
-      const sym = {
-        leads: $("sym-leads") && $("sym-leads").checked,
-        everything: $("sym-everything") && $("sym-everything").checked,
-        overwhelmed: $("sym-overwhelmed") && $("sym-overwhelmed").checked,
-        harder: $("sym-harder") && $("sym-harder").checked,
-        flat: $("sym-flat") && $("sym-flat").checked,
-      };
-
-      if (sym.leads) ctx.symptoms.push("Need more qualified leads");
-      if (sym.everything) ctx.symptoms.push("Tried multiple fixes and growth is still stuck");
-      if (sym.overwhelmed) ctx.symptoms.push("The team is overloaded");
-      if (sym.harder) ctx.symptoms.push("Growth still depends too much on me");
-      if (sym.flat) ctx.symptoms.push("Revenue has stalled");
-
-      const inboundCount = inboundToCount(ctx.leads7);
-      const realDemand = inboundCount * fitToMult(ctx.fitPct) * intentAdj(ctx.leadQuality);
-
-      const callsHighTier = ctx.calls7 === "11-20" || ctx.calls7 === "21-40" || ctx.calls7 === "41+";
-      const callsNotZero = ctx.calls7 !== "0-2";
-      const closeHigh = ctx.closeRate === "high" || ctx.closeRate === "elite";
-
-      const speedFail = ctx.speed === "leak" || ctx.speed === "broken";
-      const processStrong = (ctx.speed === "elite" || ctx.speed === "fast") && (ctx.followup === "high" || ctx.followup === "elite");
-
-      const scores = { VOL: 0, CON: 0, DEL: 0, STR: 0 };
-
-      if (ctx.capacity === "high") scores.DEL += 8;
-      if (ctx.capacity === "mid") scores.DEL += 3;
-      if (ctx.stall === "delivery") scores.DEL += 4;
-      if (ctx.capacity === "low") scores.DEL -= 6;
-
-      if (ctx.closeRate === "low" && callsNotZero) scores.CON += 6;
-      if (ctx.speed === "broken") scores.CON += 6;
-      if (ctx.speed === "leak") scores.CON += 4;
-      if (ctx.followup === "low") scores.CON += 5;
-      if (ctx.followup === "mid") scores.CON += 2;
-
-      if (ctx.leads7 === "0-5") scores.VOL += 6;
-      if (ctx.fitPct === "low") scores.VOL += 7;
-      if (ctx.fitPct === "mid") scores.VOL += 3;
-      if (ctx.leadQuality === "low") scores.VOL += 4;
-
-      if (ctx.stall === "nothing") scores.STR -= 8;
-      if (ctx.stall === "decisions") scores.STR += 6;
-      if (ctx.stall === "sales") scores.STR += 3;
-
-      if (sym.leads) scores.VOL += 1;
-      if (sym.flat) { scores.VOL += 1; scores.CON += 1; }
-      if (sym.everything) scores.CON += 1;
-      if (sym.overwhelmed) scores.DEL += 1;
-      if (sym.harder) scores.STR += 1;
-
-      const veryLowInbound = ctx.leads7 === "0-5";
-      const lowInbound = ctx.leads7 === "0-5" || ctx.leads7 === "6-20";
-      const veryLowCalls = ctx.calls7 === "0-2";
-
-      if (veryLowInbound) {
-        scores.VOL += 8;
-        scores.CON = Math.min(scores.CON, 2);
-      }
-
-      if (lowInbound && veryLowCalls) {
-        scores.VOL += 6;
-        scores.CON = Math.min(scores.CON, 2);
-      }
-
-      if (inboundCount >= 50 && veryLowCalls && processStrong) {
-        scores.CON += 8;
-        scores.VOL = Math.min(scores.VOL, 2);
-      }
-
-      if ((speedFail || ctx.followup === "low") && !lowInbound) scores.VOL = Math.min(scores.VOL, 2);
-      if (realDemand >= 40) scores.VOL = Math.min(scores.VOL, 2);
-
-      if (inboundCount >= 50 && (ctx.fitPct === "low" || ctx.leadQuality === "low")) {
-        scores.VOL += 4;
-        scores.CON += 1;
-      }
-
-      if (processStrong && closeHigh && inboundCount >= 50 && !callsHighTier && !veryLowCalls) {
-        scores.VOL += 4;
-      }
-
-      const sorted = sortScores(scores);
-      let primaryKey = sorted[0] ? sorted[0][0] : "CON";
-      let secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["VOL"])[0];
-
-      if ((lowInbound && veryLowCalls) && primaryKey === "CON" && ctx.capacity !== "high") {
-        primaryKey = "VOL";
-        secondaryKey = (sorted.find((x) => x[0] !== primaryKey) || ["CON"])[0];
-      }
-
-      let conf = confidenceFromGap((sorted[0] ? sorted[0][1] : 0) - (sorted[1] ? sorted[1][1] : 0));
-      conf = capConfidenceBySample(conf, ctx.calls7);
-
-      const leak = calcLeak(ctx.rev, primaryKey, conf);
-      const base = REV_MIDPOINT[ctx.rev] || 167000;
-      const kept = Math.max(base - leak, 0);
-
-      setBadge(conf);
-      const leakEl = $("revenue-leak");
-      if (leakEl) leakEl.textContent = leak.toLocaleString();
-
-      const primary = FIX_DATA[primaryKey] || FIX_DATA.CON;
-      const economic = ECONOMIC_DATA[primaryKey] || ECONOMIC_DATA.CON;
-
-      const titleEl = $("constraint-title"), descEl = $("constraint-desc"), fixEl = $("fix-plan");
-      const econTitleEl = $("economic-constraint-title"), econDescEl = $("economic-constraint-desc");
-      const ctaCopyEl = $("cta-copy");
-
-      if (titleEl) titleEl.textContent = primary.title;
-      if (descEl) descEl.textContent = primary.desc;
-      if (econTitleEl) econTitleEl.textContent = economic.title;
-      if (econDescEl) econDescEl.textContent = economic.desc;
-
-      if (fixEl) {
-        const gate = mechanicsFirstBlock(ctx);
-        const primaryBlock = "Primary constraint actions (Days 4–14):" + NL + primary.fix(ctx);
-        fixEl.textContent = (gate ? gate + NL + NL : "") + primaryBlock;
-      }
-
-      if (ctaCopyEl) {
-        ctaCopyEl.textContent =
-          "Your current bottleneck is likely costing you about $" +
-          leak.toLocaleString() +
-          " per month in missed capacity, weak conversion, or margin leakage. The next step is not just more marketing. It is pressure-testing the math underneath this bottleneck.";
-      }
-
-      const whyList = $("constraint-why");
-      if (whyList) {
-        whyList.innerHTML = "";
-        (primary.why || []).forEach((w) => {
-          const li = document.createElement("li");
-          li.textContent = w;
-          whyList.appendChild(li);
-        });
-      }
-
-      const notEl = $("constraint-not");
-      if (notEl) notEl.textContent = "What is not the main issue: " + (primary.not || "");
-
-      const secEl = $("secondary-constraint");
-      if (secEl && secondaryKey && secondaryKey !== primaryKey) {
-        secEl.textContent = "What likely becomes the next bottleneck: " + FIX_DATA[secondaryKey].title;
-      } else if (secEl) {
-        secEl.textContent = "";
-      }
-
-      const driversEl = $("constraint-drivers");
-      if (driversEl) {
-        if (primaryKey === "VOL") driversEl.textContent = "Drivers: fit, intent, offer clarity, response speed, follow-up.";
-        else if (primaryKey === "CON") driversEl.textContent = "Drivers: offer promise, proof, risk reversal, next-step friction.";
-        else if (primaryKey === "DEL") driversEl.textContent = "Drivers: capacity, standardization, handoffs, rework.";
-        else if (primaryKey === "STR") driversEl.textContent = "Drivers: decision rights, delegation, documentation.";
-        else driversEl.textContent = "";
-      }
-
-      const whyBox = $("why-not-volume");
-      const whyText = $("why-not-volume-text");
-      if (whyBox && whyText) {
-        const showWhy = primaryKey === "CON" && secondaryKey === "VOL" && conf !== "Low" && processStrong && closeHigh && callsNotZero;
-        if (showWhy) {
-          whyText.textContent = "You already respond fast, follow up deeply, and close at a high rate. Adding more traffic now increases load, not outcomes. Improving the offer increases qualified demand without increasing noise.";
-          whyBox.classList.remove("hidden");
-        } else {
-          whyBox.classList.add("hidden");
-        }
-      }
-
-      const summaryEl = $("input-summary");
-      if (summaryEl) {
-        summaryEl.textContent = [
-          "Revenue: " + ctx.rev,
-          "Inbound leads (7d): " + ctx.leads7,
-          "Qualified-fit rate: " + ctx.fitPct,
-          "Lead intent: " + ctx.leadQuality,
-          "Speed to first response: " + ctx.speed + " (" + speedLabel(ctx.speed) + ")",
-          "Follow-up attempts: " + ctx.followup + " (" + followupLabel(ctx.followup) + ")",
-          "Calls booked (7d): " + ctx.calls7,
-          "Close rate: " + ctx.closeRate,
-          "Delivery capacity: " + ctx.capacity,
-          "If away 7 days: " + ctx.stall,
-          "Step 1 symptoms: " + (ctx.symptoms.length ? ctx.symptoms.join(", ") : "(none)"),
-          "Derived qualified demand (est.): " + Math.round(realDemand) + " / 7d",
-        ].join(NL);
-      }
-
-      renderChart(kept, leak);
-      goToStep("result");
-    }
-
-    function wireButtons() {
-      const introBtn = $("btn-intro");
-      const s1 = $("btn-step1");
-      const s2 = $("btn-step2");
-      const b2 = $("btn-back-step2");
-      const br = $("btn-back-result");
-      const sim = $("toggle-sim");
-      const reset = $("btn-reset");
-
-      if (introBtn) introBtn.addEventListener("click", () => goToStep("step-1"));
-      if (s1) s1.addEventListener("click", validateStep1);
-      if (b2) b2.addEventListener("click", () => goToStep("step-1"));
-      if (s2) s2.addEventListener("click", calculateFix);
-      if (br) br.addEventListener("click", () => goToStep("step-2"));
-      if (sim) sim.addEventListener("click", toggleSimulation);
-      if (reset) reset.addEventListener("click", () => window.location.reload());
-    }
-
-    function runTests() {
-      if (!$("btn-intro")) throw new Error("Missing intro button");
-      if (!$("btn-step1")) throw new Error("Missing Step 1 button");
-      if (!$("btn-step2")) throw new Error("Missing Step 2 button");
-      if (!$("btn-back-step2")) throw new Error("Missing Step 2 back button");
-      if (!$("btn-back-result")) throw new Error("Missing result back button");
-      if (!$("fitPct")) throw new Error("Missing fitPct question");
-      if (!$("economic-constraint-title")) throw new Error("Missing economic constraint title");
-      if (!$("cta-copy")) throw new Error("Missing CTA copy block");
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      try {
-        wireSymptomLimiter();
-        wireButtons();
-        runTests();
-      } catch (e) {
-        showRuntimeError("Init error: " + (e && e.message ? e.message : "Unknown init error") + ". Open DevTools Console for details.");
-        console.error(e);
-      }
-    });
-
-  })();
-  </script>
 </body>
 </html>
